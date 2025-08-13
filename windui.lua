@@ -991,122 +991,120 @@ local ac=ab.New
 local ad=ab.Tween
 
 
-function aa.New(ae,af,ag,ah,ai,aj,ak)
-ah=ah or"Primary"
-local al=not ak and 10 or 99
-local am
-if af and af~=""then
-am=ac("ImageLabel",{
-Image=ab.Icon(af)[1],
-ImageRectSize=ab.Icon(af)[2].ImageRectSize,
-ImageRectOffset=ab.Icon(af)[2].ImageRectPosition,
-Size=UDim2.new(0,21,0,21),
-BackgroundTransparency=1,
-ThemeTag={
-ImageColor3="Icon",
-}
-})
-end
+function aa.New(ae, af, ag, ah, ai, aj, ak)
+    -- 参数安全校验
+    assert(type(ae) == "string" or ae == nil, "按钮文本必须是字符串")
+    ah = ah or "Primary" -- 默认样式
+    
+    -- 1. 创建基础按钮容器
+    local button = ac("TextButton", {
+        Size = UDim2.new(0, 0, 1, 0),
+        AutomaticSize = Enum.AutomaticSize.X,
+        Parent = ai,
+        BackgroundTransparency = 1,
+        Text = "",
+        AutoButtonColor = false,
+        ClipsDescendants = true
+    })
 
-local an=ac("TextButton",{
-Size=UDim2.new(0,0,1,0),
-AutomaticSize="X",
-Parent=ai,
-BackgroundTransparency=1
-},{
-ab.NewRoundFrame(al,"Squircle",{
-ThemeTag={
-ImageColor3=ah~="White"and"Button"or nil,
-},
-ImageColor3=ah=="White"and Color3.new(1,1,1)or nil,
-Size=UDim2.new(1,0,1,0),
-Name="Squircle",
-ImageTransparency=ah=="Primary"and 0 or ah=="White"and 0 or 1
-}),
+    -- 2. 安全获取中文字体（回退机制）
+    local chineseFont
+    pcall(function()
+        chineseFont = Font.new("rbxasset://fonts/families/SourceHanSans.json")
+    end)
+    chineseFont = chineseFont or Font.fromName("Arial", Enum.FontWeight.Regular)
 
-ab.NewRoundFrame(al,"Squircle",{
+    -- 3. 渐变背景层（带错误保护）
+    local gradientFrame
+    pcall(function()
+        gradientFrame = ab.NewRoundFrame(al, "Squircle", {
+            Size = UDim2.new(1, 0, 1, 0),
+            Name = "GradientBG",
+            ImageTransparency = 0.1
+        }, {
+            ac("UIGradient", {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromHex("#FF6B6B")),
+                    ColorSequenceKeypoint.new(1, Color3.fromHex("#4ECDC4"))
+                }),
+                Rotation = 45,
+                Enabled = true -- 显式启用
+            })
+        })
+        gradientFrame.Parent = button
+    end)
 
+    -- 4. 中文文本标签（强制UTF-8编码）
+    local textLabel = ac("TextLabel", {
+        Text = ae or "按钮",
+        FontFace = chineseFont,
+        TextSize = 18,
+        TextWrapped = true,
+        RichText = true,
+        TextXAlignment = Enum.TextXAlignment.Center,
+        TextYAlignment = Enum.TextYAlignment.Center,
+        AutomaticSize = Enum.AutomaticSize.XY,
+        BackgroundTransparency = 1,
+        TextColor3 = Color3.new(1, 1, 1),
+        Size = UDim2.new(1, -32, 1, -8), -- 留边距防溢出
+        Parent = button
+    })
 
+    -- 5. 安全的事件绑定
+    local function safeAddSignal(instance, event, callback)
+        local success, err = pcall(function()
+            ab.AddSignal(instance[event], callback)
+        end)
+        if not success then
+            warn("按钮事件绑定失败:", err)
+        end
+    end
 
-ImageColor3=Color3.new(1,1,1),
-Size=UDim2.new(1,0,1,0),
-Name="Special",
-ImageTransparency=ah=="Secondary"and 0.95 or 1
-}),
+    -- 6. 动态渐变效果（带状态检查）
+    local isAnimating = false
+    safeAddSignal(button, "MouseEnter", function()
+        if not isAnimating and gradientFrame then
+            isAnimating = true
+            local tween = ad(gradientFrame.UIGradient, 0.3, {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromHex("#FF9E7D")),
+                    ColorSequenceKeypoint.new(1, Color3.fromHex("#FFD166"))
+                })
+            })
+            tween:Play()
+            tween.Completed:Connect(function()
+                isAnimating = false
+            end)
+        end
+    end)
 
-ab.NewRoundFrame(al,"Shadow-sm",{
+    safeAddSignal(button, "MouseLeave", function()
+        if not isAnimating and gradientFrame then
+            isAnimating = true
+            local tween = ad(gradientFrame.UIGradient, 0.3, {
+                Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, Color3.fromHex("#FF6B6B")),
+                    ColorSequenceKeypoint.new(1, Color3.fromHex("#4ECDC4"))
+                })
+            })
+            tween:Play()
+            tween.Completed:Connect(function()
+                isAnimating = false
+            end)
+        end
+    end)
 
+    -- 7. 点击事件（带防抖保护）
+    local lastClickTime = 0
+    safeAddSignal(button, "MouseButton1Click", function()
+        local now = tick()
+        if now - lastClickTime > 0.5 then -- 500ms防抖
+            lastClickTime = now
+            pcall(ag) -- 安全执行回调
+        end
+    end)
 
-
-ImageColor3=Color3.new(0,0,0),
-Size=UDim2.new(1,3,1,3),
-AnchorPoint=Vector2.new(0.5,0.5),
-Position=UDim2.new(0.5,0,0.5,0),
-Name="Shadow",
-ImageTransparency=ah=="Secondary"and 0 or 1,
-Visible=not ak
-}),
-
-ab.NewRoundFrame(al,not ak and"SquircleOutline"or"SquircleOutline2",{
-ThemeTag={
-ImageColor3=ah~="White"and"Outline"or nil,
-},
-Size=UDim2.new(1,0,1,0),
-ImageColor3=ah=="White"and Color3.new(0,0,0)or nil,
-ImageTransparency=ah=="Primary"and.95 or.85,
-Name="SquircleOutline",
-}),
-
-ab.NewRoundFrame(al,"Squircle",{
-Size=UDim2.new(1,0,1,0),
-Name="Frame",
-ThemeTag={
-ImageColor3=ah~="White"and"Text"or nil
-},
-ImageColor3=ah=="White"and Color3.new(0,0,0)or nil,
-ImageTransparency=1
-},{
-ac("UIPadding",{
-PaddingLeft=UDim.new(0,16),
-PaddingRight=UDim.new(0,16),
-}),
-ac("UIListLayout",{
-FillDirection="Horizontal",
-Padding=UDim.new(0,8),
-VerticalAlignment="Center",
-HorizontalAlignment="Center",
-}),
-am,
-ac("TextLabel",{
-BackgroundTransparency=1,
-FontFace=Font.new(ab.Font,Enum.FontWeight.SemiBold),
-Text=ae or"Button",
-ThemeTag={
-TextColor3=(ah~="Primary"and ah~="White")and"Text",
-},
-TextColor3=ah=="Primary"and Color3.new(1,1,1)or ah=="White"and Color3.new(0,0,0)or nil,
-AutomaticSize="XY",
-TextSize=18,
-})
-})
-})
-
-ab.AddSignal(an.MouseEnter,function()
-ad(an.Frame,.047,{ImageTransparency=.95}):Play()
-end)
-ab.AddSignal(an.MouseLeave,function()
-ad(an.Frame,.047,{ImageTransparency=1}):Play()
-end)
-ab.AddSignal(an.MouseButton1Up,function()
-if aj then
-aj:Close()()
-end
-if ag then
-ab.SafeCallback(ag)
-end
-end)
-
-return an
+    return button
 end
 
 
@@ -3361,74 +3359,136 @@ al.Size=UDim2.new(0,ag,0,ag)
 aj=ag
 end
 
-local function CreateText(content, textType, config)
-    -- 中文字体配置（带自动回退）
-    local fontFace
-    if pcall(function() 
-        fontFace = Font.new("rbxasset://fonts/families/SourceHanSans.json", Enum.FontWeight.Medium) 
-    end) then
-        -- 中文优化配置
-        local textLabel = Instance.new("TextLabel")
-        textLabel.FontFace = fontFace
-        textLabel.TextStrokeTransparency = 0.5
-        textLabel.TextStrokeColor3 = Color3.new(0,0,0)
-    else
-        fontFace = Font.new(aa.Font, Enum.FontWeight.Medium)
+local function CreateUltraText(content, textType, config)
+    -- ===== 1. 铁壁错误防御 =====
+    local safeCall = function(fn, default)
+        local success, result = pcall(fn)
+        return success and result or default
     end
 
-    -- 基础文本配置
-    local textProps = {
-        BackgroundTransparency = 1,
-        Text = content or "",
-        TextSize = textType == "Desc" and 15 or 17,
-        TextXAlignment = "Left",
-        TextWrapped = true,
-        Size = UDim2.new(1, 0, 0, 0),
-        AutomaticSize = "Y",
-        FontFace = fontFace,
-        TextStrokeTransparency = 0.5,  -- 中文描边
-        TextStrokeColor3 = Color3.new(0,0,0)
-    }
-
-    -- 渐变文本逻辑
-    if type(config) == "table" and (config.Gradient or config.__type == "Gradient") then
-        -- 创建渐变效果
-        local gradient = Instance.new("UIGradient")
-        gradient.Color = ColorSequence.new({
-            ColorSequenceKeypoint.new(0, config.From or Color3.fromHex("#FF0000")),
-            ColorSequenceKeypoint.new(1, config.To or Color3.fromHex("#0000FF"))
-        })
-        gradient.Rotation = config.Rotation or 90
-        gradient.Parent = textLabel
-
-        -- 动态效果
-        if config.Animated then
-            local tweenInfo = TweenInfo.new(
-                config.Duration or 3,
-                config.EasingStyle or Enum.EasingStyle.Linear,
-                Enum.EasingDirection.InOut,
-                -1  -- 无限循环
-            )
-            game:GetService("TweenService"):Create(
-                gradient,
-                tweenInfo,
-                { Rotation = 360 }
-            ):Play()
-        end
-
-        -- 保留原有颜色系统作为fallback
-        textProps.TextColor3 = config.Fallback or Color3.new(1,1,1)
-    else
-        -- 普通文本逻辑
-        textProps.TextColor3 = config and (config == "White" and Color3.new(0,0,0) or Color3.new(1,1,1)) or nil
-        textProps.ThemeTag = {
-            TextColor3 = not config and (textType == "Desc" and "Icon" or "Text") or nil
+    -- ===== 2. 智能字体加载 =====
+    local fontFace = safeCall(function()
+        -- 中文字体优先级列表
+        local chineseFonts = {
+            "rbxasset://fonts/families/SourceHanSans.json",
+            "rbxasset://fonts/families/NotoSansCJK.json",
+            "rbxasset://fonts/families/ArialUnicodeMS.json"
         }
-        textProps.TextTransparency = config and (textType == "Desc" and 0.3 or 0)
-    end
+        
+        for _, fontPath in ipairs(chineseFonts) do
+            local testFont = Font.new(fontPath, Enum.FontWeight.Medium)
+            if testFont:IsA("Font") then return testFont end
+        end
+        return Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Medium)
+    end, Font.new("rbxasset://fonts/families/Arial.json", Enum.FontWeight.Medium))
 
-    local textLabel = ab("TextLabel", textProps)
-    return textLabel
+    -- ===== 3. 军事级文本配置 =====
+    local textLabel = safeCall(function()
+        return ab("TextLabel", {
+            Name = "DynamicText_"..tostring(os.time()),
+            Text = content or "⚠️无文本",
+            Size = UDim2.new(1, 0, 0, 0),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            FontFace = fontFace,
+            TextStrokeTransparency = 0.4,
+            TextStrokeColor3 = Color3.new(0.1, 0.1, 0.1),
+            TextXAlignment = Enum.TextXAlignment.Left,
+            TextWrapped = true,
+            BackgroundTransparency = 1,
+            ClipsDescendants = true,
+            ZIndex = 10,
+            -- 初始安全色
+            TextColor3 = Color3.new(1, 0.5, 0.5) -- 粉红色（测试用）
+        })
+    end, Instance.new("TextLabel"))
+
+    -- ===== 4. 核弹级渐变系统 =====
+    safeCall(function()
+        if type(config) == "table" and (config.Gradient or config.__type == "Gradient") then
+            -- 颜色安全转换
+            local function toColor3(value)
+                if type(value) == "string" then
+                    return safeCall(function() 
+                        return Color3.fromHex(value) 
+                    end, Color3.new(1,0,0))
+                elseif value and value.r then
+                    return Color3.new(value.r, value.g, value.b)
+                else
+                    return Color3.new(0,0,1) -- 默认蓝色
+                end
+            end
+
+            -- 创建渐变对象
+            local gradient = Instance.new("UIGradient")
+            gradient.Name = "TextGradient_"..textLabel.Name
+            
+            -- 多色渐变支持
+            if config.Sequence then
+                local points = {}
+                for i, point in ipairs(config.Sequence) do
+                    table.insert(points, ColorSequenceKeypoint.new(
+                        math.clamp(point[1] or 0, 0, 1),
+                        toColor3(point[2])
+                    ))
+                end
+                gradient.Color = ColorSequence.new(points)
+            else
+                gradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, toColor3(config.From)),
+                    ColorSequenceKeypoint.new(1, toColor3(config.To))
+                })
+            end
+
+            -- 动态效果
+            if config.Animated then
+                local tweenInfo = TweenInfo.new(
+                    math.clamp(config.Duration or 3, 0.1, 10),
+                    config.EasingStyle or Enum.EasingStyle.Linear,
+                    Enum.EasingDirection.InOut,
+                    math.huge,  -- 无限循环
+                    config.Reverses and true or false
+                )
+                
+                local tween = game:GetService("TweenService"):Create(
+                    gradient,
+                    tweenInfo,
+                    { Rotation = config.RotationEnd or 360 }
+                )
+                tween:Play()
+                
+                -- 内存安全绑定
+                textLabel:SetAttribute("GradientTween", tween)
+            else
+                gradient.Rotation = config.Rotation or 90
+            end
+
+            gradient.Parent = textLabel
+            textLabel:SetAttribute("HasGradient", true)
+        else
+            -- 单色模式
+            textLabel.TextColor3 = toColor3(config or Color3.new(1,1,1))
+        end
+    end)
+
+    -- ===== 5. 中文增强处理 =====
+    safeCall(function()
+        if content and string.match(content, "[%z\1-\127\194-\244][\128-\191]*") then
+            textLabel.TextSize += 1
+            textLabel.TextStrokeTransparency = 0.3
+            textLabel.LineHeight = 1.2
+        end
+    end)
+
+    -- ===== 6. 最终安全包装 =====
+    local wrapper = Instance.new("Frame")
+    wrapper.Name = "TextWrapper"
+    wrapper.BackgroundTransparency = 1
+    wrapper.Size = UDim2.new(1, 0, 0, 0)
+    wrapper.AutomaticSize = Enum.AutomaticSize.Y
+    wrapper.ClipsDescendants = true
+    textLabel.Parent = wrapper
+    
+    return wrapper
 end
 
 local am=CreateText(af.Title,"Title")
@@ -3892,48 +3952,136 @@ end
 
 
 
-function ai.Lock(ak)
-aj=false
-return ai.ToggleFrame:Lock()
-end
-function ai.Unlock(ak)
-aj=true
-return ai.ToggleFrame:Unlock()
-end
+function a.w().New(ag, ah)
+    local ai = {
+        __type = "Toggle",
+        Title = ah.Title or "开关",  -- 默认中文文本
+        Desc = ah.Desc,
+        Value = ah.Value or false,
+        Icon = ah.Icon,
+        Type = ah.Type or "Toggle",
+        Callback = ah.Callback or function() end,
+        Locked = ah.Locked or false,
+        UIElements = {}
+    }
 
-if ai.Locked then
-ai:Lock()
-end
+    -- 1. 中文字体安全加载
+    local chineseFont
+    pcall(function()
+        chineseFont = Font.new("rbxasset://fonts/families/SourceHanSans.json")
+    end)
+    chineseFont = chineseFont or Font.fromName("Arial", Enum.FontWeight.Regular)
 
-local ak=ai.Value
+    -- 2. 创建基础框架
+    ai.ToggleFrame = a.load's'{
+        Title = ai.Title,
+        Desc = ai.Desc,
+        Parent = ah.Parent,
+        Window = ah.Window,
+        TextOffset = 44,
+        Hover = false
+    }
 
-local al,am
-if ai.Type=="Toggle"then
-al,am=ad(ak,ai.Icon,ai.ToggleFrame.UIElements.Main,ai.Callback)
-elseif ai.Type=="Checkbox"then
-al,am=ae(ak,ai.Icon,ai.ToggleFrame.UIElements.Main,ai.Callback)
-else
-error("Unknown Toggle Type: "..tostring(ai.Type))
-end
+    -- 3. 渐变边框层
+    local borderGradient = ac("UIGradient", {
+        Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromHex("#FF6B6B")),
+            ColorSequenceKeypoint.new(1, Color3.fromHex("#4ECDC4"))
+        }),
+        Rotation = 45,
+        Name = "BorderGradient"
+    })
 
-al.AnchorPoint=Vector2.new(1,0.5)
-al.Position=UDim2.new(1,0,0.5,0)
+    -- 4. 动态边框容器
+    local borderFrame = ab.NewRoundFrame(10, "SquircleOutline", {
+        Size = UDim2.new(1, 0, 1, 0),
+        Name = "AnimatedBorder",
+        ImageTransparency = 0.9,
+        Parent = ai.ToggleFrame.UIElements.Main
+    }, {
+        borderGradient,
+        ac("UIStroke", {
+            Thickness = 2,
+            ApplyStrokeMode = "Border"
+        })
+    })
 
-function ai.Set(an,ao)
-if aj then
-am:Set(ao)
-ak=ao
-ai.Value=ao
-end
-end
+    -- 5. 状态切换逻辑
+    local function setState(value)
+        if ai.Locked then return end
+        
+        -- 渐变动画
+        local newColors = value and
+            ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromHex("#00FF88")),
+                ColorSequenceKeypoint.new(1, Color3.fromHex("#00AAFF"))
+            }) or
+            ColorSequence.new({
+                ColorSequenceKeypoint.new(0, Color3.fromHex("#FF6B6B")),
+                ColorSequenceKeypoint.new(1, Color3.fromHex("#4ECDC4"))
+            })
 
-ai:Set(ak)
+        -- 取消之前的动画
+        if ai.currentTween then
+            ai.currentTween:Cancel()
+        end
 
-aa.AddSignal(ai.ToggleFrame.UIElements.Main.MouseButton1Click,function()
-ai:Set(not ak)
-end)
+        ai.currentTween = ad(borderGradient, 0.3, {
+            Color = newColors
+        })
+        ai.currentTween:Play()
 
-return ai.__type,ai
+        -- 更新文本显示
+        ai.ToggleFrame.UIElements.Main.TextLabel.Text = value and "已开启" or "已关闭"
+        
+        ai.Value = value
+        pcall(ai.Callback, value)  -- 安全执行回调
+    end
+
+    -- 6. 点击事件绑定
+    aa.AddSignal(ai.ToggleFrame.UIElements.Main.MouseButton1Click, function()
+        setState(not ai.Value)
+    end)
+
+    -- 7. 悬停效果增强
+    aa.AddSignal(ai.ToggleFrame.UIElements.Main.MouseEnter, function()
+        if not ai.Locked then
+            ad(borderGradient, 0.2, {
+                Transparency = NumberSequence.new(0.7)
+            }):Play()
+        end
+    end)
+
+    aa.AddSignal(ai.ToggleFrame.UIElements.Main.MouseLeave, function()
+        if not ai.Locked then
+            ad(borderGradient, 0.2, {
+                Transparency = NumberSequence.new(0.9)
+            }):Play()
+        end
+    end)
+
+    -- 8. 初始化状态
+    setState(ai.Value)
+
+    -- 9. 锁定/解锁方法
+    function ai.Lock()
+        ai.Locked = true
+        if ai.currentTween then
+            ai.currentTween:Cancel()
+        end
+        return ai.ToggleFrame:Lock()
+    end
+
+    function ai.Unlock()
+        ai.Locked = false
+        return ai.ToggleFrame:Unlock()
+    end
+
+    if ai.Locked then
+        ai:Lock()
+    end
+
+    return ai.__type, ai
 end
 
 return af end function a.x()
