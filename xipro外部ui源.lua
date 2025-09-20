@@ -1,4 +1,3 @@
-
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -6,6 +5,21 @@ local RunService = game:GetService("RunService")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
+
+-- 客户端脚本顶部：定义所有游戏对应的外部脚本URL映射表
+-- 格式：["游戏名"] = "外部脚本URL"（游戏名需与UI中按钮文本完全一致）
+local GameExternalScriptMap = {
+    ["最强战场"] = "https://raw.githubusercontent.com/xmtdnmsl/KL-Script-HUB/refs/heads/main/3636592358QUANJIASIGUNG.lua",
+    ["Blox Fruit"] = "https://raw.githubusercontent.com/你的仓库/你的分支/BloxFruitScript.lua", -- 替换为实际URL
+    ["疯狂之城"] = "https://raw.githubusercontent.com/你的仓库/你的分支/CrazyCityScript.lua", -- 替换为实际URL
+    ["忍者传奇"] = "https://raw.githubusercontent.com/你的仓库/你的分支/NinjaLegendScript.lua", -- 替换为实际URL
+    ["俄亥俄州"] = "https://raw.githubusercontent.com/你的仓库/你的分支/OhioScript.lua", -- 替换为实际URL
+    ["刀刃球"] = "https://raw.githubusercontent.com/你的仓库/你的分支/BladeBallScript.lua", -- 替换为实际URL
+    ["战争大亨"] = "https://raw.githubusercontent.com/你的仓库/你的分支/WarTycoonScript.lua", -- 替换为实际URL
+    ["Fisch"] = "https://raw.githubusercontent.com/你的仓库/你的分支/FischScript.lua", -- 替换为实际URL
+    ["Doors"] = "https://raw.githubusercontent.com/你的仓库/你的分支/DoorsScript.lua" -- 替换为实际URL
+}
+
 
 local function IsMobile()
     return UserInputService.TouchEnabled and not UserInputService.MouseEnabled
@@ -249,7 +263,7 @@ local function showLoadingAnimation(onComplete)
     welcomeLabel.Size = UDim2.new(1, -50, 0, IsMobile() and 50 or 55)
     welcomeLabel.Position = UDim2.new(0, 25, 0, IsMobile() and 75 or 85)
     welcomeLabel.BackgroundTransparency = 1
-    welcomeLabel.Text = "欢迎使用 Xi Pro 脚本"
+    welcomeLabel.Text = "欢迎使用 Alex 脚本"
     welcomeLabel.TextColor3 = Color3.fromRGB(140, 200, 255)
     welcomeLabel.TextSize = IsMobile() and 24 or 32
     welcomeLabel.Font = Enum.Font.GothamBold
@@ -383,7 +397,7 @@ local function showLoadingAnimation(onComplete)
         {text = "下载游戏数据...", progress = 75},
         {text = "解析配置文件...", progress = 85},
         {text = "准备游戏列表...", progress = 95},
-        {text = "神仇牛逼！", progress = 100}
+        {text = "Alex牛逼！", progress = 100}
     }
     spawn(function()
         wait(0.6)
@@ -584,7 +598,7 @@ local function showGameList(screenGui, mainContainer, background, list_game)
     titleLabel.Size = UDim2.new(1, -100, 1, 0)
     titleLabel.Position = UDim2.new(0, 20, 0, 0)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "Xi Pro"
+    titleLabel.Text = "Alex"
     titleLabel.TextColor3 = Color3.fromRGB(240, 245, 255)
     titleLabel.TextSize = IsMobile() and 16 or 20
     titleLabel.Font = Enum.Font.GothamBold
@@ -954,6 +968,74 @@ local function showGameList(screenGui, mainContainer, background, list_game)
         statusDot.BorderSizePixel = 0
         statusDot.ZIndex = 7
         statusDot.Parent = gameItem
+        -- 客户端脚本：在 for i, game in ipairs(list_game) 循环内，修改 gameButton.Activated 逻辑
+gameButton.Activated:Connect(function()
+    local clickedGameName = gameButton.Text -- 获取当前点击的游戏名
+    local loadTip = Instance.new("TextLabel") -- 加载状态提示
+    loadTip.Name = "LoadTip"
+    loadTip.Size = UDim2.new(0, 220, 0, 30)
+    loadTip.Position = UDim2.new(0.5, -110, 0.8, -15) -- 屏幕下方居中
+    loadTip.BackgroundTransparency = 1
+    loadTip.Text = "正在加载 " .. clickedGameName .. " 外部脚本..."
+    loadTip.TextColor3 = Color3.fromRGB(100, 255, 150)
+    loadTip.TextSize = 18
+    loadTip.Font = Enum.Font.GothamBold
+    loadTip.ZIndex = 10
+    loadTip.Parent = mainContainer
+
+    -- #######################################
+    -- 核心：从映射表匹配当前游戏的外部脚本URL，加载并执行
+    -- #######################################
+    local success, err = pcall(function()
+        -- 1. 从映射表中获取当前游戏的外部脚本URL
+        local targetScriptUrl = GameExternalScriptMap[clickedGameName]
+        if not targetScriptUrl then
+            error("未配置 " .. clickedGameName .. " 的外部脚本URL") -- 无URL时抛错
+        end
+
+        -- 2. 加载外部脚本代码（客户端直接请求URL）
+        local externalScriptCode = game:HttpGet(targetScriptUrl)
+        -- 3. 执行外部脚本
+        loadstring(externalScriptCode)()
+
+        -- 4. 加载成功提示
+        loadTip.Text = clickedGameName .. " 外部脚本加载成功！"
+    end)
+
+    -- 加载失败处理（提示错误信息）
+    if not success then
+        loadTip.Text = "加载失败：" .. err:sub(1, 35) -- 截取关键错误（避免文本过长）
+        loadTip.TextColor3 = Color3.fromRGB(255, 100, 100)
+    end
+
+    -- #######################################
+    -- 原有逻辑：点击后关闭当前UI容器
+    -- #######################################
+    local closeInfo = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In)
+    local scaleTween = TweenService:Create(mainContainer, closeInfo, {
+        Size = UDim2.new(0, 0, 0, 0),
+        Position = UDim2.new(0.5, 0, 0.5, 0)
+    })
+    local backgroundTween = TweenService:Create(background, closeInfo, {
+        BackgroundTransparency = 1
+    })
+    scaleTween:Play()
+    backgroundTween:Play()
+
+    -- UI销毁（防止残留占用内存）
+    scaleTween.Completed:Connect(function()
+        if screenGui and screenGui.Parent then
+            screenGui:Destroy()
+        end
+    end)
+    spawn(function()
+        wait(0.5)
+        if screenGui and screenGui.Parent then
+            screenGui:Destroy()
+        end
+    end)
+end)
+
 
         local dotCorner = Instance.new("UICorner")
         dotCorner.CornerRadius = UDim.new(0.5, 0)
@@ -1386,13 +1468,10 @@ local function showGameList(screenGui, mainContainer, background, list_game)
                 developerText.Parent = contentFrame
 
                 local developers = {
-                    {name = "神仇", role = "主作者", desc = "项目负责人 · 缝合大手子", color = Color3.fromRGB(255, 100, 100)},
+                    {name = "冷寂", role = "主作者", desc = "项目负责人 · 缝合大手子", color = Color3.fromRGB(255, 100, 100)},
                     {name = "鲨蛋", role = "副作者", desc = "功能开发 · 代码优化", color = Color3.fromRGB(100, 255, 100)},
                     {name = "泡芙", role = "UI制作者", desc = "二改ui · 用户体验", color = Color3.fromRGB(255, 200, 100)},
                     {name = "Irena", role = "剪辑师", desc = "视频制作 · 宣传内容", color = Color3.fromRGB(255, 100, 255)},
-                    {name = "du8", role = "备用作者", desc = "代码维护 · 功能搬运", color = Color3.fromRGB(100, 200, 255)},
-                    {name = "qumu", role = "白名单制作者", desc = "安全系统 · 权限管理", color = Color3.fromRGB(200, 255, 100)},
-                    {name = "小天", role = "李佳浩", desc = "技术研究 · 安全测试", color = Color3.fromRGB(255, 150, 200)}
                 }
 
                 local cardHeight = IsMobile() and 90 or 120
@@ -1540,7 +1619,7 @@ local function showGameList(screenGui, mainContainer, background, list_game)
         mainContainer.Position = finalPosition
     end)
 
-    print(" Xi Pro 游戏列表已显示")
+    print(" Alex. Pro 游戏列表已显示")
     print(" 支持 " .. #list_game .. " 个游戏")
 end
 
