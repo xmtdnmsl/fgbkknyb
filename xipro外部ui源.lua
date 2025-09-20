@@ -9,15 +9,15 @@ local playerGui = player:WaitForChild("PlayerGui")
 -- 客户端脚本顶部：定义所有游戏对应的外部脚本URL映射表
 -- 格式：["游戏名"] = "外部脚本URL"（游戏名需与UI中按钮文本完全一致）
 local GameExternalScriptMap = {
-    ["最强战场"] = "https://raw.githubusercontent.com/xmtdnmsl/KL-Script-HUB/refs/heads/main/3636592358QUANJIASIGUNG.lua",
-    ["Blox Fruit"] = "https://raw.githubusercontent.com/你的仓库/你的分支/BloxFruitScript.lua", -- 替换为实际URL
-    ["疯狂之城"] = "https://raw.githubusercontent.com/你的仓库/你的分支/CrazyCityScript.lua", -- 替换为实际URL
-    ["忍者传奇"] = "https://raw.githubusercontent.com/你的仓库/你的分支/NinjaLegendScript.lua", -- 替换为实际URL
-    ["俄亥俄州"] = "https://raw.githubusercontent.com/你的仓库/你的分支/OhioScript.lua", -- 替换为实际URL
-    ["刀刃球"] = "https://raw.githubusercontent.com/你的仓库/你的分支/BladeBallScript.lua", -- 替换为实际URL
-    ["战争大亨"] = "https://raw.githubusercontent.com/你的仓库/你的分支/WarTycoonScript.lua", -- 替换为实际URL
-    ["Fisch"] = "https://raw.githubusercontent.com/你的仓库/你的分支/FischScript.lua", -- 替换为实际URL
-    ["Doors"] = "https://raw.githubusercontent.com/你的仓库/你的分支/DoorsScript.lua" -- 替换为实际URL
+    ["最强战场"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn",
+    ["Blox Fruit"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["疯狂之城"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["忍者传奇"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["俄亥俄州"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["刀刃球"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["战争大亨"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["Fisch"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn", -- 替换为实际URL
+    ["Doors"] = "https://raw.githubusercontent.com/hdjsjjdgrhj/script-hub/refs/heads/main/caid%20cn" -- 替换为实际URL
 }
 
 
@@ -969,7 +969,7 @@ local function showGameList(screenGui, mainContainer, background, list_game)
         statusDot.ZIndex = 7
         statusDot.Parent = gameItem
         -- 客户端脚本：在 for i, game in ipairs(list_game) 循环内，修改 gameButton.Activated 逻辑
-gameButton.Activated:Connect(function()
+    gameButton.Activated:Connect(function()
     local clickedGameName = gameButton.Text -- 获取当前点击的游戏名
     local loadTip = Instance.new("TextLabel") -- 加载状态提示
     loadTip.Name = "LoadTip"
